@@ -28,4 +28,4 @@ RUN composer dump-autoload --no-dev --optimize \
     && chown -R www-data:www-data storage bootstrap/cache
 
 EXPOSE 10000
-CMD ["apache2-foreground"]
+CMD ["sh", "-c", "php artisan migrate --force && exec apache2-foreground"]
