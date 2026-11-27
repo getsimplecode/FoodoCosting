@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class ProfileTest extends TestCase
@@ -24,7 +26,7 @@ class ProfileTest extends TestCase
             ->assertSee('Profile information')
             ->assertSee('Update password')
             ->assertSee('Delete account')
-            ->assertSee('Account menu for ' . $user->name);
+            ->assertSee('Account menu for '.$user->name);
     }
 
     public function test_account_menu_has_profile_and_logout_actions(): void
@@ -45,6 +47,8 @@ class ProfileTest extends TestCase
 
     public function test_profile_information_can_be_updated(): void
     {
+        Notification::fake();
+
         $user = User::factory()->create();
 
         $response = $this
@@ -63,6 +67,7 @@ class ProfileTest extends TestCase
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
         $this->assertNull($user->email_verified_at);
+        Notification::assertSentTo($user, VerifyEmail::class);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

@@ -47,6 +47,42 @@ class AuthenticationTest extends TestCase
         $this->assertGuest();
     }
 
+    public function test_login_attempts_are_limited_per_account_across_ip_addresses(): void
+    {
+        $user = User::factory()->create();
+
+        for ($attempt = 1; $attempt <= 10; $attempt++) {
+            $this->withHeaders([
+                'X-Forwarded-For' => '203.0.113.'.$attempt,
+            ])->post('/login', [
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $this->post('/login', [
+            'email' => $user->email,
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('email');
+
+        $this->assertGuest();
+    }
+
+    public function test_login_attempts_are_limited_per_ip_across_accounts(): void
+    {
+        for ($attempt = 1; $attempt <= 60; $attempt++) {
+            $this->post('/login', [
+                'email' => 'unknown'.$attempt.'@example.com',
+                'password' => 'wrong-password',
+            ]);
+        }
+
+        $this->post('/login', [
+            'email' => 'another@example.com',
+            'password' => 'wrong-password',
+        ])->assertSessionHasErrors('email');
+    }
+
     public function test_users_can_logout(): void
     {
         $user = User::factory()->create();

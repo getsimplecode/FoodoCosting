@@ -108,8 +108,13 @@ Set these on the **FoodoCosting web service** in Render's Environment page. An e
 | `DB_PASSWORD` | TiDB database password |
 | `MYSQL_ATTR_SSL_CA` | `/etc/ssl/certs/ca-certificates.crt` |
 | `SESSION_DRIVER` | `database` |
+| `SESSION_SECURE_COOKIE` | `true` |
+| `SESSION_HTTP_ONLY` | `true` |
+| `SESSION_SAME_SITE` | `lax` |
 
 Never put real values in documentation, GitHub, screenshots, or chat. The local `.env` is excluded from Docker builds by `.dockerignore`; keep it out of Git as well. If a password or application key is exposed publicly, rotate it.
+
+The app trusts forwarded client-IP and HTTPS headers only from the immediate network peer, and does not trust forwarded host headers. The accepted host and generated production URLs come from `APP_URL`. Keep the Render service behind its proxy; do not expose the app container directly.
 
 ## Deploy changes
 
@@ -163,6 +168,8 @@ The app's `bootstrap/app.php` trusts Render's forwarded HTTPS headers, and `APP_
 ## Current account behavior
 
 Public `GET /register` and `POST /register` routes are disabled in [`routes/auth.php`](../routes/auth.php). After deployment, `/register` should return `404`. This blocks new public signups; it does not delete accounts that already exist.
+
+Dashboard and application data routes require a verified email address. Before deploying this behavior, check existing accounts for a null `email_verified_at`; those users must verify their email before using those routes. Changing an account email sends a new verification link and pauses access to verified routes until it is confirmed.
 
 ## Suggested learning path
 
